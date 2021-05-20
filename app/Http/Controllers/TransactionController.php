@@ -5,15 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\CartModel;
 use App\Models\TransactionModel;
 use Illuminate\Http\Request;
-
+use DB;
 class TransactionController extends Controller
 {
 
-    function CartSell(Request $request){
-        $invoice=$request->invoice;
-        $CartList=CartModel::Where('invoice_no',$invoice)->get();
+    function CartSale(Request $request){
+        $user_id=$request->user_id;
+        $CartList=CartModel::Where('user_id',$user_id)->get();
         $cartInsertDeleteResult="";
-        foreach($CartList as $CartListItem) {
+        $user = '';
+        $user_name = DB::table('cart_list')
+                    ->join('user_list', 'cart_list.user_id', 'user_list.id')
+                    ->get('user_list.fullname');
+                    foreach($user_name as $name)
+                    {
+                         $user = $name->fullname;
+                    }
+            foreach($CartList as $CartListItem) {
             $resultInsert=  TransactionModel::insert([
                 "invoice_no"=>$CartListItem['invoice_no'],
                 "invoice_date"=>$CartListItem['invoice_date'],
@@ -22,20 +30,14 @@ class TransactionController extends Controller
                 "product_unit_price"=>$CartListItem['product_unit_price'],
                 "product_total_price"=>$CartListItem['product_total_price'],
                 "seller_name"=>$CartListItem['seller_name'],
+                "user_name"=>$user,
                 "product_icon"=>$CartListItem['product_icon'],
             ]);
 
-            if($resultInsert==1){
-                $resultDelete= CartModel::Where('id',$CartListItem['id'])->delete();
-                if($resultDelete==1){
-                    $cartInsertDeleteResult=1;
-                }
-                else{
-                    $cartInsertDeleteResult=0;
-                }
-            }
         }
-        return $cartInsertDeleteResult;
+        CartModel::Where('user_id',$user_id)->delete();
+
+        return $resultInsert;
     }
 
 

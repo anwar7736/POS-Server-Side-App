@@ -15,8 +15,10 @@ class ReportController extends Controller
     }
 
     function TransactionListByDate(Request $request){
-        
-        $result=  TransactionModel::orderBy('id','desc')->get();
+        $from_date = $request->input('from_date');
+        $to_date   = $request->input('to_date');
+        $result    = TransactionModel::whereBetween('invoice_date', array($from_date, $to_date))
+        			 ->orderBy('id','desc')->get();
         return  $result;
     }
 

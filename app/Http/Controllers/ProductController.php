@@ -15,22 +15,31 @@ class ProductController extends Controller
         $product_price=  $request->input('product_price');
         $product_category= $request->input('product_category');
         $product_remarks= $request->input('product_remarks');
-        $product_icon= $request->file('product_icon')->store('public');
-        $result=ProductModel::insert([
-            "product_name"=>$product_name,
-            "product_code "=>$product_code,
-            "product_icon"=>$product_icon,
-            "product_price"=>$product_price,
-            "product_category"=>$product_category,
-            "product_remarks"=>$product_remarks,
+        $image= $request->file('product_icon');
+        $countProduct = ProductModel::where('product_name', $product_name)->count();
+        if($countProduct===0)
+        {
+             $product_icon= $image->store('public');
+             $result=ProductModel::insert([
+             "product_name"=>$product_name,
+             "product_code"=>$product_code,
+             "product_icon"=>$product_icon,
+             "product_price"=>$product_price,
+             "product_category"=>$product_category,
+             "product_remarks"=>$product_remarks,
         ]);
         return $result;
+        }
+        else{
+            return "Product name already exists";
+        }
+       
     }
 
     function DeleteProduct(Request $request){
         $id= $request->id;
-        $product_icon= ProductModel::Where('id',$id)->get(['product_icon']);
-        Storage::delete($product_icon[0]['product_icon']);
+        $products= ProductModel::Where('id',$id)->get();
+        Storage::delete($products[0]['product_icon']);
         $result=ProductModel::Where('id', $id)->delete();
         return  $result;
     }
@@ -47,46 +56,46 @@ class ProductController extends Controller
         return $result;
     }
 
-    function UpdateProductWithImage(Request $request){
+    function UpdateProduct(Request $request){
         $id= $request->input('id');
-
-        // Old Image Delete
-        $product_icon= ProductModel::Where('id',$id)->get(['product_icon']);
-        Storage::delete($product_icon[0]['product_icon']);
-
-        // New Image Upload
-        $product_icon= $request->file('product_icon')->store('public');
+        $image= $request->file('product_icon');
         $product_name= $request->input('product_name');
         $product_price=  $request->input('product_price');
         $product_category= $request->input('product_category');
         $product_remarks= $request->input('product_remarks');
 
-        $result= ProductModel::Where('id', $id)->update([
-            "product_name"=>$product_name,
-            "product_icon"=>$product_icon,
-            "product_price"=>$product_price,
-            "product_category"=>$product_category,
-            "product_remarks"=>$product_remarks,
-        ]);
+        $countProduct = ProductModel::where('product_name', $product_name)->where('id', $id)->count();
+        $countTotal =   ProductModel::where('product_name', $product_name)->count();
 
-        return $result;
+        if($countProduct===1 || $countTotal===0)
+        {
+            if(empty($image))
+            {
+                $result= ProductModel::Where('id', $id)->update([
+                "product_name"=>$product_name,
+                "product_price"=>$product_price,
+                "product_category"=>$product_category,
+                "product_remarks"=>$product_remarks
+                ]);
+                return $result;
+            }
+            else{
+                $products = ProductModel::where('id', $id)->get();
+                Storage::delete($products[0]['product_icon']);
+                $product_icon = $image->store('public');
+                $result = ProductModel::where('id', $id)->update([
+                    "product_name"=>$product_name,
+                    "product_icon"=>$product_icon,
+                    "product_price"=>$product_price,
+                    "product_category"=>$product_category,
+                    "product_remarks"=>$product_remarks,
+                ]);
+            }
+        }
+        else{
+             return "Product name already exists";
+        }
 
-    }
-
-    function UpdateProductWithoutImage(Request $request){
-        $id= $request->input('id');
-        $product_name= $request->input('product_name');
-        $product_price=  $request->input('product_price');
-        $product_category= $request->input('product_category');
-        $product_remarks= $request->input('product_remarks');
-
-        $result= ProductModel::Where('id', $id)->update([
-            "product_name"=>$product_name,
-            "product_price"=>$product_price,
-            "product_category"=>$product_category,
-            "product_remarks"=>$product_remarks,
-        ]);
-        return $result;
-    }
+      }
 
 }
