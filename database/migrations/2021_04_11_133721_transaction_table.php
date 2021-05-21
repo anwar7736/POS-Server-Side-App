@@ -22,6 +22,7 @@ class TransactionTable extends Migration
             $table->string('product_unit_price',200);
             $table->string('product_total_price',200);
             $table->string('seller_name',200);
+            $table->string('user_name',200);
             $table->string('product_icon',200);
 
         });
